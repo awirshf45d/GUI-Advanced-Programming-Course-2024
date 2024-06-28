@@ -1,0 +1,72 @@
+[
+    {
+        "category": "Foods",
+        "items": [
+            {
+                "title": "Pizza Margherita",
+                "price": 10.99,
+                "rating": 4.5,
+                "num_raters": 120
+            },
+            {
+                "title": "Spaghetti Carbonara",
+                "price": 12.99,
+                "rating": 4.7,
+                "num_raters": 98
+            },
+            {
+                "title": "Caesar Salad",
+                "price": 8.99,
+                "rating": 4.3,
+                "num_raters": 85
+            },
+            {
+                "title": "Grilled Salmon",
+                "price": 15.99,
+                "rating": 4.8,
+                "num_raters": 150
+            },
+            {
+                "title": "Chicken Alfredo",
+                "price": 13.99,
+                "rating": 4.6,
+                "num_raters": 110
+            }
+        ]
+    },
+    {
+        "category": "Drinks",
+        "items": [
+            {
+                "title": "Coca Cola",
+                "price": 2.99,
+                "rating": 4.5,
+                "num_raters": 80
+            },
+            {
+                "title": "Orange Juice",
+                "price": 3.99,
+                "rating": 4.7,
+                "num_raters": 65
+            },
+            {
+                "title": "Lemonade",
+                "price": 3.49,
+                "rating": 4.6,
+                "num_raters": 70
+            },
+            {
+                "title": "Espresso",
+                "price": 2.49,
+                "rating": 4.8,
+                "num_raters": 90
+            },
+            {
+                "title": "Latte",
+                "price": 3.99,
+                "rating": 4.7,
+                "num_raters": 75
+            }
+        ]
+    }
+]
