@@ -1,4 +1,4 @@
-from src.tui import run_curses
+from src.tui import launch
 
 if __name__ == "__main__":
-    run_curses()
+    launch()
