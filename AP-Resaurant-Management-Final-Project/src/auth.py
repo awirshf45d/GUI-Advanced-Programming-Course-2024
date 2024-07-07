@@ -1,13 +1,16 @@
 import curses, curses.ascii
 from db.db import close_connection,connect_to_database
 from db.models import User
+from typing import Tuple, Union
 
-def login(stdscr):
+def login(stdscr) -> Tuple[bool, Union[str, None], Union[User, None]]:
+    
     stdscr.clear()
     h, w = stdscr.getmaxyx()
     stdscr.addstr(h//2 - 8, w//2 - len("Login Page")//2   , "Login Page", curses.A_BOLD | 1)
     stdscr.addstr(h//2 - 2, w//2 - 10, "Username: ")
     curses.echo()
+    
     username = stdscr.getstr(h//2 - 2, w//2 + 1).decode('utf-8')
     
     if username == "" or " " in username:
@@ -44,7 +47,7 @@ def login(stdscr):
         return False, err, None
         
 
-def register(stdscr):
+def register(stdscr) -> Tuple[bool, str, Union[User, None]]:
 
     stdscr.clear()
     h, w = stdscr.getmaxyx()
@@ -85,4 +88,4 @@ def register(stdscr):
             close_connection(connection)
             return True, "User {} registered successfully!".format(user.username), user
     else:
-        return False, "Something Went Wrong on Establishing Connection with DB.", None
+        return False, "Something Went Wrong on Establishing Connection with DB. {}".format(err), None

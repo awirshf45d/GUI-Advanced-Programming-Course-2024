@@ -1,15 +1,17 @@
 from db.db import close_connection,connect_to_database
+from typing import Union, Optional, Tuple
+from db.models import User
 import curses
 import curses.ascii
 
-def show_menu(stdscr,selected_items_p, total_price_p,  user=None):
+def show_menu(stdscr ,selected_items_p : dict, total_price_p : int,  user: Optional[User]=None) -> Tuple[bool, str, dict, int ]:
     stdscr.clear()
     h, w = stdscr.getmaxyx()
 
-    total_price = total_price_p if total_price_p else 0
-    selected_items = selected_items_p if selected_items_p else {}
-    search_mode = False
-    search_query = ""
+    total_price : int = total_price_p if total_price_p else 0
+    selected_items : dict = selected_items_p if selected_items_p else {}
+    search_mode : bool = False
+    search_query : str = ""
 
     connection, err = connect_to_database()
     if connection:
@@ -29,7 +31,7 @@ def show_menu(stdscr,selected_items_p, total_price_p,  user=None):
             cursor.close()
             close_connection(connection)
     else:
-        return False, "Something Went Wrong while fetching food Menu from DB", None, None, None
+        return False, "Something Went Wrong while fetching food Menu from DB. {}".format(err), selected_items, total_price
 
     current_row = 0
     total_items = sum(len(category['items']) for category in menu)
@@ -89,11 +91,6 @@ def show_menu(stdscr,selected_items_p, total_price_p,  user=None):
 
         stdscr.refresh()
 
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-
     print_menu(stdscr, current_row)
 
     while True:
@@ -127,9 +124,9 @@ def show_menu(stdscr,selected_items_p, total_price_p,  user=None):
                     print_menu(stdscr, current_row)
                     continue
                 elif confirm_key == ord('y'):
-                    return False, "", None, None, None
+                    return False, "", {}, 0
             else:
-                return False, "", None, None, None
+                return False, "", selected_items, total_price
         elif key == curses.KEY_UP and current_row > 0:
             current_row -= 1
         elif key == curses.KEY_DOWN and current_row < total_items - 1:
@@ -162,10 +159,10 @@ def show_menu(stdscr,selected_items_p, total_price_p,  user=None):
         elif key == ord('/'):
             search_mode = True
         elif key in (10,13):
-            if not user:return False, "You haven't login yet ...", None, None, None,
+            if not user:return False, "You haven't login yet ...", {}, 0
 
             # user has login in the app.
-            return True, "Finalizing The Order...", None, selected_items, total_price
+            return True, "Finalizing The Order...", selected_items, total_price
             
                        
 

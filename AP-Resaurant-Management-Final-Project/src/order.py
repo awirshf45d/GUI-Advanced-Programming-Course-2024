@@ -3,7 +3,9 @@ import haversine as hs
 from db.db import connect_to_database, close_connection
 from datetime import datetime
 from time import sleep
-def finalizing_order(stdscr, user, selected_items, total_price):
+from db.models import User
+from typing import Tuple, Optional, Union
+def finalizing_order(stdscr, user: User, selected_items: dict, total_price : int) -> Tuple[bool, str] :
     order_type = None
     while True:
         stdscr.clear()
@@ -89,10 +91,10 @@ def finalizing_order(stdscr, user, selected_items, total_price):
         else:
             return False, "Order could not be completed: {}".format(msg)
 
-def insert_orders(selected_items, user_id, longitude=None, latitude=None):
+def insert_orders(selected_items : dict, user_id : int, longitude : Optional[str] =None, latitude : Optional[str] =None) -> Tuple[bool, str]:
     connection,err = connect_to_database()
     if not connection:
-        return False, "Failed to connect to database"
+        return False, "Failed to connect to DB. {}".format(err)
 
     cursor = connection.cursor()
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -106,7 +108,7 @@ def insert_orders(selected_items, user_id, longitude=None, latitude=None):
 
     return True, "Orders successfully inserted into database"
 
-def reserve_table(table_id, user_id):
+def reserve_table(table_id : int, user_id : int) -> Tuple[bool, str]:
     connection,err = connect_to_database()
     if not connection:
         return False, "Failed to connect to database"
@@ -119,7 +121,7 @@ def reserve_table(table_id, user_id):
     connection.close()
     return True, "The reservation for Table ID {} has been successfully made".format(table_id)
 
-def get_destination_loc(stdscr):
+def get_destination_loc(stdscr) -> Tuple[Union[str, None], Union[str, None]]:
     loc_source = (19.0760, 72.8777)  # hard-coded geo-location
     longitude, latitude = None, None
 

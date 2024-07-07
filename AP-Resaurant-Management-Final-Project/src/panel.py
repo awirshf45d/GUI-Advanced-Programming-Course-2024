@@ -1,7 +1,9 @@
 from db.db import close_connection, connect_to_database
+from db.models import User
 import curses
 from time import sleep
-def load_prev_orders(stdscr, user):
+from typing import Tuple, Union, Optional
+def load_prev_orders(stdscr, user:User) -> Tuple[bool, str]:
     stdscr.clear()
     h, w = stdscr.getmaxyx()
 
@@ -16,12 +18,12 @@ def load_prev_orders(stdscr, user):
             stdscr.addstr(0, 0, "Previous Orders:")
             for idx, order in enumerate(result):
                 order_id, order_date, item_title, quantity, latitude, longitude = order
-                stdscr.addstr(idx + 1, 0, f"Order ID: {order_id}, Date: {order_date}, Item: {item_title}, Quantity: {quantity}, Lat: {latitude}, Lon: {longitude}")
+                one_row = f"Order ID: {order_id}, Date: {order_date}, Item: {item_title}, Quantity: {quantity}, Lat: {latitude}, Lon: {longitude}"
+                stdscr.addstr(h//2 + idx + 1, w//2 - len(one_row)//2, )
 
-            stdscr.addstr(h - 1, 0, "Press any key to return to the dashboard page.")
             stdscr.refresh()
         else:
-            stdscr.addstr(0, 0, "No previous orders found.")
+            stdscr.addstr(h//2, w//2, "No previous orders found.")
             stdscr.refresh()
         
         stdscr.addstr(h - 1, 0, "Press any key to return to the dashboard page.")
@@ -36,7 +38,7 @@ def load_prev_orders(stdscr, user):
 
 
 
-def edit_tables(stdscr):
+def edit_tables(stdscr) -> Tuple[bool, str]:
     edit_type = None
     while True:
         stdscr.clear()
@@ -139,7 +141,7 @@ def edit_tables(stdscr):
         else:
             return False, "Something went wrong while establishing connection with DB: {}".format(err)
 
-def edit_food_menu(stdscr):
+def edit_food_menu(stdscr) -> Tuple[bool, str]:
     edit_type = None
     while True:
         stdscr.clear()
