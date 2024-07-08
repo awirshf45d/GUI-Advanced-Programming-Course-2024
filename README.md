@@ -1,4 +1,4 @@
-# GUI-Advanced-Programming-Course-2024 -> Final Project
+# GUI-AP-Course-2024 (Final Project)
 A TUI-based app designed as an interface for interacting with a restaurant, supporting both customer and admin users.
     
 - Customer Features:
