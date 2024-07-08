@@ -3,6 +3,7 @@ from db.models import User
 import curses
 from time import sleep
 from typing import Tuple, Union, Optional
+from datetime import datetime
 def load_prev_orders(stdscr, user:User) -> Tuple[bool, str]:
     stdscr.clear()
     h, w = stdscr.getmaxyx()
@@ -19,14 +20,14 @@ def load_prev_orders(stdscr, user:User) -> Tuple[bool, str]:
             for idx, order in enumerate(result):
                 order_id, order_date, item_title, quantity, latitude, longitude = order
                 one_row = f"Order ID: {order_id}, Date: {order_date}, Item: {item_title}, Quantity: {quantity}, Lat: {latitude}, Lon: {longitude}"
-                stdscr.addstr(h//2 + idx + 1, w//2 - len(one_row)//2, )
+                stdscr.addstr(h//2 - 5 + idx + 1, w//2 - len(one_row)//2, one_row)
 
             stdscr.refresh()
         else:
             stdscr.addstr(h//2, w//2, "No previous orders found.")
             stdscr.refresh()
         
-        stdscr.addstr(h - 1, 0, "Press any key to return to the dashboard page.")
+        stdscr.addstr(h-2, w//2 - len("Press any key to return to the dashboard page.")//2, "Press any key to return to the dashboard page.")
         stdscr.refresh()
         stdscr.getch()
         
@@ -270,56 +271,101 @@ def edit_food_menu(stdscr) -> Tuple[bool, str]:
     return True, "Menu update completed successfully."
 
 def extract_restaurant_order_records(stdscr):
-    stdscr.clear()
+    """
+    Steps:
+    - start messages, and guide
+    - filter by (+ validate all inputs)
+        - Date (YYYY-MM-DD) or leave it empty (Start Date and End Date)
+        - filter by item title (single or multiple)
+        - select by order type -> dine-in/takeout or delivery (based on lat and lon in the table)
+    - show results and press any key to try again, and press Esc to back to the dashboard
+    """
+    start_date:str = ""
+    end_date:str = ""
+
     h, w = stdscr.getmaxyx()
-    stdscr.addstr(h // 2 - 10, w // 2 - len("Filter Restaurant Orders...") // 2, "Filter Restaurant Orders...", curses.A_BOLD)
+
+    def print_banner(banner: str):
+        stdscr.clear()
+        stdscr.addstr(h // 2 - 10, w // 2 - len(banner) // 2, banner, curses.A_BOLD)
+        stdscr.refresh()
+
+    print_banner("Filter Restaurant Orders by Date...")
 
     connection, err = connect_to_database()
     if not connection:
-        return False, "Something went wrong while establishing connection with DB: {}".format(err)
-    
+        return False, f"Something went wrong while establishing connection with DB: {err}"
+
     cursor = connection.cursor()
-    
-    # Show the menu items
-    stdscr.clear()
-    stdscr.addstr(h // 2 - 10, w // 2 - len("Restaurant Menu...") // 2, "Restaurant Menu...", curses.A_BOLD)
+
+    def validate_supplied_date(date: str) -> Tuple[bool, str]:
+        if date.lower() == 'n':
+            return True, ""
+        else:
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+                return True, date
+            except ValueError:
+                return False, date
+
+    def get_date_input(banner: str, prompt:str) -> str:
+        while True:
+            print_banner(banner)
+            stdscr.addstr(h // 2 - 6, w // 2 - len(prompt) // 2, prompt)
+            curses.echo()
+            date_input = stdscr.getstr(h // 2 - 6, w // 2 + len(prompt) // 2).decode('utf-8')
+            
+            isValid, date_input = validate_supplied_date(date_input)
+            if not isValid:
+                stdscr.addstr(h // 2 - 2, w // 2 - len("Invalid date format. Try Again.") // 2, "Invalid date format. Try Again.")
+                stdscr.refresh()
+                sleep(1.5)
+            else:
+                return date_input
+
+    sleep(2)
+    start_date = get_date_input("Filter Restaurant Orders by Date...", "Enter start date (YYYY-MM-DD) or n: ")
+    stdscr.addstr(0,0,f"'{start_date}'")
+    end_date = get_date_input("Filter Restaurant Orders by Date...","Enter end date (YYYY-MM-DD) or n: ")
+
+    print_banner("Filter Restaurant Orders by Food Menu Items or Category...")
+
     cursor.execute("SELECT id, title, price, category FROM food_menu")
     menu_items = cursor.fetchall()
-    menu_display = "Current Menu:\n"
-    for item in menu_items:
-        menu_display += f"{item[0]}. {item[1]} - ${item[2]:.2f} [{item[3]}]\n"
-    stdscr.addstr(h // 2 - 6, w // 2 - len(menu_display.split('\n')[0]) // 2, menu_display)
+    
+    for idx, item in enumerate(menu_items):
+        menu_item = f"{item[0]}. {item[1]} - ${item[2]} [{item[3]}]"
+        stdscr.addstr(h // 2 - 8 + idx, w // 2 - len(menu_item) // 2, menu_item)
+    stdscr.refresh()
 
-    # Get filter inputs from user
-    stdscr.addstr(h // 2 - 4, w // 2 - len("Enter start date (YYYY-MM-DD) or N: ") // 2, "Enter start date (YYYY-MM-DD) or N: ")
-    start_date = stdscr.getstr(h // 2 - 4, w // 2 + len("Enter start date (YYYY-MM-DD) or N: ") // 2).decode('utf-8')
+    stdscr.addstr(h // 2, w // 2 - len("Enter the item title(s) separated by commas or n: ") // 2, "Enter the item title(s) separated by commas or n: ")
+    curses.echo()
+    item_titles = stdscr.getstr(h // 2, w // 2 + len("Enter the item title(s) separated by commas or n: ") // 2).decode('utf-8')
 
-    stdscr.addstr(h // 2 - 2, w // 2 - len("Enter end date (YYYY-MM-DD) or N: ") // 2, "Enter end date (YYYY-MM-DD) or N: ")
-    end_date = stdscr.getstr(h // 2 - 2, w // 2 + len("Enter end date (YYYY-MM-DD) or N: ") // 2).decode('utf-8')
 
-    stdscr.addstr(h // 2, w // 2 - len("Enter the item ID or N: ") // 2, "Enter the item ID or N: ")
-    item_id = stdscr.getstr(h // 2, w // 2 + len("Enter the item ID or N: ") // 2).decode('utf-8')
 
-    stdscr.addstr(h // 2 + 2, w // 2 - len("Enter the order type (delivery, dine-in/takeout) or N: ") // 2, "Enter the order type (delivery, dine-in/takeout) or N: ")
-    order_type = stdscr.getstr(h // 2 + 2, w // 2 + len("Enter the order type (delivery, dine-in/takeout) or N: ") // 2).decode('utf-8')
+    stdscr.addstr(h // 2 + 2, w // 2 - len("Enter the order type (delivery, dine-in/takeout) or n: ") // 2, "Enter the order type (delivery, dine-in/takeout) or n: ")
+    curses.echo()
+    order_type = stdscr.getstr(h // 2 + 2, w // 2 + len("Enter the order type (delivery, dine-in/takeout) or n: ") // 2).decode('utf-8')
 
-    # Construct the query based on non-empty inputs
     query = "SELECT * FROM restaurant_orders WHERE 1=1"
     params = []
 
-    if start_date != 'N':
+    if start_date.lower() != 'n':
         query += " AND order_date >= %s"
         params.append(start_date)
-    
-    if end_date != 'N':
+
+    if end_date.lower() != 'n':
         query += " AND order_date <= %s"
         params.append(end_date)
-    
-    if item_id != 'N':
-        query += " AND item_title = (SELECT title FROM food_menu WHERE id = %s)"
-        params.append(item_id)
-    
-    if order_type != 'N':
+
+    if item_titles.lower() != 'n':
+        item_titles_list = tuple(title.strip() for title in item_titles.split(','))
+        placeholders = ', '.join(['%s'] * len(item_titles_list))
+        query += f" AND item_title IN ({placeholders})"
+        params.extend(item_titles_list)
+
+    if order_type.lower() != 'n':
         if order_type.lower() == 'delivery':
             query += " AND latitude IS NOT NULL AND longitude IS NOT NULL"
         else:  # dine-in/takeout
@@ -328,17 +374,18 @@ def extract_restaurant_order_records(stdscr):
     cursor.execute(query, params)
     orders = cursor.fetchall()
 
-    # Display the filtered orders
-    stdscr.clear()
-    stdscr.addstr(h // 2 - 10, w // 2 - len("Filtered Orders...") // 2, "Filtered Orders...", curses.A_BOLD)
-    order_display = "Filtered Orders:\n"
-    for order in orders:
-        order_display += f"Order ID: {order[0]}, Date: {order[1]}, Item: {order[2]}, Quantity: {order[3]}, User ID: {order[4]}, Latitude: {order[5]}, Longitude: {order[6]}\n"
-    stdscr.addstr(h // 2 - 6, w // 2 - len(order_display.split('\n')[0]) // 2, order_display)
+    print_banner("Filtered Orders...")
+    
+    for idx,order in enumerate(orders):
+        order_display = f"Order ID: {order[0]}\tDate: {order[1]}\tItem: {order[2]}\tQuantity: {order[3]}\tUser ID: {order[4]}\tLatitude: {order[5]}\tLongitude: {order[6]}\n"
+        stdscr.addstr(h // 2 - 6 + idx, w // 2 - len(order_display) // 2, order_display)
 
     stdscr.refresh()
-    sleep(5)
     
+    stdscr.addstr(h-2, w//2 - len("Press any key to return to the dashboard page.")//2, "Press any key to return to the dashboard page.")
+    stdscr.refresh()
+    stdscr.getch()
     cursor.close()
     close_connection(connection)
     return True, "Order records filtered successfully."
+

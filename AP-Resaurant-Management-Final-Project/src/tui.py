@@ -194,16 +194,17 @@ def restaurant_app(stdscr):
             continue
         elif user_state == 6 : # order
             hasSucceed, msg = finalizing_order(stdscr,user, selected_items, total_price)
-            print_hasSucced_message(stdscr,hasSucceed, msg, success_state=4, failure_state= 3, prev_state=prev_user_state, user=user, second_msg="Redirecting to the Dashboard ...") # s-state -> dashboard, f-state -> view food menu
+            print_hasSucced_message(stdscr,hasSucceed, msg, success_state=4, failure_state= 3, prev_state=prev_user_state, user=user, second_msg="Redirecting to the Dashboard ...", time_to_sleep=4.5) # s-state -> dashboard, f-state -> view food menu
         elif user_state == 40: # exit
             def exit_program(stdscr, user):
+                stdscr.clear()
                 h, w = stdscr.getmaxyx()
                 goodby_message="Take care, see YOU around! ..." if not user else "Take care {}, see YOU around! ...".format(user.username)
                 stdscr.attron(curses.color_pair(2)) 
                 stdscr.addstr( h // 2 - 5,  w // 2 - len(goodby_message)//2, goodby_message)
                 stdscr.attroff(curses.color_pair(2))
                 stdscr.refresh()
-                time.sleep(3)
+                time.sleep(2)
                 exit(1)
             exit_program(stdscr, user)
 
