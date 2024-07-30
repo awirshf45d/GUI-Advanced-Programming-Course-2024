@@ -10,7 +10,6 @@ A TUI-based app designed as an interface for interacting with a restaurant, supp
     - Manage tables
     - Extract filtered orders by date, order type, and food menu items
 
-I received full marks for this project from the course [TA](https://github.com/capamir).
 ### Usage
 
 ![SAMPLE](./usage.gif)
